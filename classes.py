@@ -53,7 +53,7 @@ class HeadHunter(Simple):
     def __init__(self, keyword):
         self.__url = "https://api.hh.ru/vacancies"
         self.__headers = {"User-Agent": "Google Chrome"}
-        self.__params = {"keyword": keyword, "page": 0, "count": 100}
+        self.__params = {"keyword": keyword, "page": 0, "per_page": 100}
         self.__vacancies = []
 
     def get_requests(self):
@@ -73,14 +73,33 @@ class HeadHunter(Simple):
             except requests.exceptions.RequestException as e:
                 print("Ошибка!")
                 break
-            print(f"Всего вакансий: {len(values)}")
+            print(f'Всего вакансий: {len(values)}')
             self.__vacancies.append(values)
             self.__params['page'] += 1
 
 
+class Vacancies:
+    """Класс для отображения вакансий с ограниченными полями"""
+    def __init__(self, vacancy_id, title, url, salary_from, salary_to, employer, api):
+        self.vacancy_id = vacancy_id
+        self.title = title
+        self.url = url
+        self.salary_from = salary_from
+        self.salary_to = salary_to
+        self.employer = employer
+        self.api = api
+
+    def __str__(self):
+        salary_from = f'от {self.salary_from}' if self.salary_from is not None else ''
+        salary_to = f'до {self.salary_to}' if self.salary_to is not None else ''
+        if self.salary_from is None and self.salary_to is None:
+            self.salary_from = 0
+        return f'''Вакансия \"{self.title}\" \nКомпания: \"{self.employer}\" \nЗарплата: {salary_from} {salary_to}\n
+        URL: {self.url}'''
+
 class JsonSaver:
-    """Класс для сохранения вакансий в файл в удобном формате"""
-    def __init__(self, keyword, ):
+    """Класс для сохранения вакансий в файл в удобном формате в json"""
+    def __init__(self, keyword):
         pass
 
 
