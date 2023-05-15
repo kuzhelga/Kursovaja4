@@ -1,12 +1,15 @@
+import json
 import os
 from abc import ABC, abstractmethod
 from pprint import pprint
 
 import requests as requests
 
+PAGES_NUMBER = 10
+
 
 class Simple(ABC):
-    """Абстрактный класс для наследования"""
+    """Абстрактный класс для наследования классов с API"""
 
     @abstractmethod
     def get_requests(self):
@@ -16,6 +19,21 @@ class Simple(ABC):
     def get_vacancies(self):
         pass
 
+
+class File(ABC):
+    """Абстрактный класс для наследования JsonSaver"""
+
+    @abstractmethod
+    def add_vacancies(self):
+        pass
+
+    @abstractmethod
+    def get_data(self):
+        pass
+
+    @abstractmethod
+    def delete_vacancies(self):
+        pass
 
 class SuperJob(Simple):
 
@@ -35,7 +53,7 @@ class SuperJob(Simple):
             print("Информация загружена")
         return response.json()['objects']
 
-    def get_vacancies(self, pages=1):
+    def get_vacancies(self, pages=PAGES_NUMBER):
         while self.__params['page'] < pages:
             print(f"SuperJob, поиск данных на странице {self.__params['page'] + 1}", end=": ")
             try:
@@ -65,7 +83,7 @@ class HeadHunter(Simple):
             print("Информация загружена")
         return response.json()['items']
 
-    def get_vacancies(self, pages=2):
+    def get_vacancies(self, pages=PAGES_NUMBER):
         while self.__params['page'] < pages:
             print(f"HeadHunter, поиск данных на странице {self.__params['page'] + 1}", end=": ")
             try:
@@ -97,12 +115,20 @@ class Vacancies:
         return f'''Вакансия \"{self.title}\" \nКомпания: \"{self.employer}\" \nЗарплата: {salary_from} {salary_to}\n
         URL: {self.url}'''
 
-class JsonSaver:
-    """Класс для сохранения вакансий в файл в удобном формате в json"""
-    def __init__(self, keyword):
-        pass
 
+class JsonSaver(File):
+    """Класс для сохранения вакансий в файл в формате в json и работы со списком вакансий из файла"""
+    def __init__(self, keyword, vacancies_json):
+        self.__filename = f"{keyword.title()}.json"
 
-sj = HeadHunter("python")
-pprint(sj.get_requests())
-pprint(sj.get_vacancies())
+    def create_json(self, vacancies_json):
+        """Метод записи данных в файл json"""
+        with open(self.__filename, 'w', encoding='utf-8') as file:
+            json.dump(vacancies_json, file, ensure_ascii=False, indent=4)
+
+    def vacancies_list(self):
+        """Метод записи вакансий в файл json с определенными полями"""
+        with open(self.__filename, 'w', encoding='utf-8') as file:
+            data = json.load(file)
+            vacancies = [Vacancies(x['id'], x['title'], x['url'], x['salary_from'], x['salary_to'], x['employer'], x['api']) for x in data]
+            return vacancies
