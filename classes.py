@@ -2,10 +2,6 @@ import json
 import os
 from abc import ABC, abstractmethod
 import requests as requests
-import pandas as pd
-
-
-PAGES_NUMBER = 2
 
 
 class Simple(ABC):
@@ -53,6 +49,7 @@ class SuperJob(Simple):
         return formatted_salary
 
     def get_requests(self):
+        """Метод для загрузки инфо с сайта SuperJob"""
         response = requests.get(self.__url, headers=self.__headers, params=self.__params)
         # передаем ключ API, ключевое слово для поиска и кол-во результатов на страницу
         if response.status_code != 200:
@@ -61,7 +58,8 @@ class SuperJob(Simple):
             print("Информация загружена")
         return response.json()['objects']
 
-    def get_vacancies(self, pages=3):
+    def get_vacancies(self, pages):
+        """Метод для получения списка вакансий"""
         while self.__params['page'] < pages:
             print(f"SuperJob, поиск данных на странице {self.__params['page'] + 1}", end=": ")
             try:
@@ -74,6 +72,7 @@ class SuperJob(Simple):
             self.__params['page'] += 1
 
     def get_formatted_vacancies(self):
+        """Метод для приведения списка вакансий к нужному формату"""
         formatted_vacancies = []
         for vacancy in self.__vacancies:
                 formatted_vacancies.append({
@@ -107,6 +106,7 @@ class HeadHunter(Simple):
         return formatted_salary
 
     def get_requests(self):
+        """Метод для загрузки инфо с сайта HeadHunter"""
         response = requests.get(self.__url, headers=self.__headers, params=self.__params)
         # передаем ключевое слово для поиска и кол-во результатов на страницу
         if response.status_code != 200:
@@ -115,7 +115,8 @@ class HeadHunter(Simple):
             print("Информация загружена")
         return response.json()['items']
 
-    def get_vacancies(self, pages=2):
+    def get_vacancies(self, pages):
+        """Метод для получения списка вакансий"""
         while self.__params['page'] < pages:
             print(f"HeadHunter, поиск данных на странице {self.__params['page'] + 1}", end=": ")
             try:
@@ -128,6 +129,7 @@ class HeadHunter(Simple):
             self.__params['page'] += 1
 
     def get_formatted_vacancies(self):
+        """Метод для приведения списка вакансий к нужному формату"""
         formatted_vacancies = []
         for vacancy in self.__vacancies:
             salary_from, salary_to = self.get_salary(vacancy['salary'])
@@ -163,11 +165,12 @@ class Vacancies:
 URL: {self.url}'''
 
     def __gt__(self, other):
+        """Дандер метод больше"""
         if not other.salary_from:
             return True
         elif not self.salary_from:
             return False
-        return self.salary_from >= other.salary_from
+        return self.salary_from > other.salary_from
 
 
 class JsonSaver(File):
@@ -189,11 +192,13 @@ class JsonSaver(File):
         return vacancies
 
     def sorted_vacancies_by_min_salary(self):
+        """Метод сортировки списка вакансий по минимальному значению"""
         vacancies = self.vacancies_list()
         vacancies = sorted(vacancies)
         return vacancies
 
     def sorted_vacancies_by_max_salary(self):
+        """Метод сортировки списка вакансий по максимальному значению"""
         vacancies = self.vacancies_list()
         vacancies = sorted(vacancies, reverse=True)
         return vacancies
