@@ -1,9 +1,9 @@
 import json
 import os
 from abc import ABC, abstractmethod
-from pprint import pprint
-
 import requests as requests
+import pandas as pd
+
 
 PAGES_NUMBER = 2
 
@@ -22,18 +22,18 @@ class Simple(ABC):
 
 class File(ABC):
     """Абстрактный класс для наследования JsonSaver"""
-
     @abstractmethod
-    def add_vacancies(self):
+    def create_json(self, *args):
         pass
 
     @abstractmethod
-    def get_data(self):
+    def vacancies_list(self):
         pass
 
     @abstractmethod
     def delete_vacancies(self):
         pass
+
 
 class SuperJob(Simple):
 
@@ -66,7 +66,7 @@ class SuperJob(Simple):
             print(f"SuperJob, поиск данных на странице {self.__params['page'] + 1}", end=": ")
             try:
                 values = self.get_requests()
-            except requests.exceptions.RequestException as e:
+            except requests.exceptions.RequestException:
                 print("Ошибка!")
                 break
             print(f"Всего вакансий: {len(values)}")
@@ -86,6 +86,7 @@ class SuperJob(Simple):
                 'api': 'SuperJob'
             })
         return formatted_vacancies
+
 
 class HeadHunter(Simple):
     """Класс для получения списка вакансий с сайта HeadHunter"""
@@ -119,7 +120,7 @@ class HeadHunter(Simple):
             print(f"HeadHunter, поиск данных на странице {self.__params['page'] + 1}", end=": ")
             try:
                 values = self.get_requests()
-            except requests.exceptions.RequestException as e:
+            except requests.exceptions.RequestException:
                 print("Ошибка!")
                 break
             print(f'Всего вакансий: {len(values)}')
@@ -141,6 +142,7 @@ class HeadHunter(Simple):
             })
         return formatted_vacancies
 
+
 class Vacancies:
     """Класс для отображения вакансий с ограниченными полями"""
     def __init__(self, vacancy_id, title, url, salary_from, salary_to, employer, api):
@@ -156,9 +158,9 @@ class Vacancies:
         salary_from = f'от {self.salary_from}' if self.salary_from is not None else ''
         salary_to = f'до {self.salary_to}' if self.salary_to is not None else ''
         if self.salary_from is None and self.salary_to is None:
-            self.salary_from = 0
+            self.salary_from = ''
         return f'''Вакансия \"{self.title}\" \nКомпания: \"{self.employer}\" \nЗарплата: {salary_from} {salary_to}\n
-        URL: {self.url}'''
+URL: {self.url}'''
 
     def __gt__(self, other):
         if not other.salary_from:
@@ -172,6 +174,7 @@ class JsonSaver(File):
     """Класс для сохранения вакансий в файл в формате в json и работы со списком вакансий из файла"""
     def __init__(self, keyword, vacancies_json):
         self.__filename = f"{keyword.title()}.json"
+        self.create_json(vacancies_json)
 
     def create_json(self, vacancies_json):
         """Метод записи данных в файл json"""
@@ -179,8 +182,23 @@ class JsonSaver(File):
             json.dump(vacancies_json, file, ensure_ascii=False, indent=4)
 
     def vacancies_list(self):
-        """Метод записи вакансий в файл json с определенными полями"""
-        with open(self.__filename, 'w', encoding='utf-8') as file:
+        """Метод получения вакансий из файла json с определенными полями"""
+        with open(self.__filename, 'r', encoding='utf-8') as file:
             data = json.load(file)
             vacancies = [Vacancies(x['id'], x['title'], x['url'], x['salary_from'], x['salary_to'], x['employer'], x['api']) for x in data]
         return vacancies
+
+    def sorted_vacancies_by_min_salary(self):
+        vacancies = self.vacancies_list()
+        vacancies = sorted(vacancies)
+        return vacancies
+
+    def sorted_vacancies_by_max_salary(self):
+        vacancies = self.vacancies_list()
+        vacancies = sorted(vacancies, reverse=True)
+        return vacancies
+
+    def delete_vacancies(self):
+        """Метод для очистки списка вакансий"""
+        with open(self.__filename, 'w', encoding='utf-8'):
+            print("Список вакансий очищен")
