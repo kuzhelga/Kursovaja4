@@ -1,9 +1,8 @@
-from pprint import pprint
-
 from classes import HeadHunter, SuperJob, JsonSaver
 
 # кол-во страниц для загрузки (на каждой по 100 вакансий)
-PAGES_NUMBER = 10
+PAGES_NUMBER = 1
+
 
 def main():
     vacancies_json = []
@@ -37,9 +36,13 @@ def main():
         elif command == '4':
             vacancies = jsonsaver.delete_vacancies()
             break
+        else:
+            print('Введено некорректное значение')
+            break
 
         for vacancy in vacancies:
             print(vacancy, end='\n\n')
+
 
 if __name__ == "__main__":
     main()
